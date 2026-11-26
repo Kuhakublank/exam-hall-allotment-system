@@ -55,9 +55,11 @@ erDiagram
     HALLS {
         int hall_id PK
         string hall_name UK
+        string location
         int rows
         int columns
         int capacity
+        boolean is_active
     }
 
     SEATS {
@@ -143,7 +145,8 @@ erDiagram
    - **`exam_registrations`** resolves the Many-to-Many relationship: it records *which student* is sitting *which exam session* for *which subject*, plus their resolved `group_label`. A unique rule on `(session_id, student_id)` ensures a student cannot accidentally be registered twice for the same time slot.
 
 4. **`halls`** and **`seats`** *(1-to-Many)*
-   - One **Hall** contains many **Seats** arranged in a `rows × columns` grid.
+   - One **Hall** has a unique `hall_name`, optional `location`, `rows × columns` grid dimensions, configured `capacity`, and `is_active` flag (halls are deactivated rather than deleted so historical records stay intact).
+   - Each Hall contains many **Seats** arranged in a `rows × columns` grid.
    - Each seat has exact `(row_num, col_num)` coordinates (needed so the seating engine can check **Left, Right, Front, and Back** orthogonal neighbors), plus `is_blocked` (never assigned) and `is_accessible` (prioritized for special-needs students).
    - A unique constraint on `(hall_id, row_num, col_num)` guarantees no duplicate seat coordinates exist in a hall.
 

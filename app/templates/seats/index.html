@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Seat Management | Exam Seating System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap align-items-center pb-2 mb-4 border-bottom gap-2">
+  <div>
+    <h1 class="h3 mb-1">Seat Management</h1>
+    <p class="text-muted small mb-0">Block unavailable desks and mark accessible seats per hall</p>
+  </div>
+  <a href="{{ url_for('halls.index') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-building me-1"></i>Manage Halls
+  </a>
+</div>
+
+{% if halls %}
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body">
+    <form method="get" action="{{ url_for('seats.index') }}" class="row g-2 align-items-end">
+      <div class="col-md-6 col-lg-4">
+        <label for="hallSelect" class="form-label small fw-semibold">Select Examination Hall</label>
+        <select id="hallSelect" name="hall_id" class="form-select">
+          {% for hall in halls %}
+          <option value="{{ hall.hall_id }}" {% if selected_hall and hall.hall_id == selected_hall.hall_id %}selected{% endif %}>
+            {{ hall.hall_name }} ({{ hall.rows }}×{{ hall.columns }}, usable: {{ hall.usable_capacity }}{% if not hall.is_active %}, Inactive{% endif %})
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Load Hall Layout</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% if selected_hall %}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body py-2">
+        <div class="text-muted small">Configured Capacity</div>
+        <div class="h5 mb-0">{{ selected_hall.capacity }} / {{ selected_hall.total_grid_seats }} grid</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body py-2">
+        <div class="text-muted small">Blocked Seats</div>
+        <div class="h5 mb-0 text-danger">{{ selected_hall.blocked_seats_count }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body py-2">
+        <div class="text-muted small">Accessible (Unblocked)</div>
+        <div class="h5 mb-0 text-primary">{{ selected_hall.accessible_seats_count }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body py-2">
+        <div class="text-muted small">Effective Usable Capacity</div>
+        <div class="h5 mb-0 text-success">{{ selected_hall.usable_capacity }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <span class="fw-semibold">
+      {{ selected_hall.hall_name }} — Interactive Seat Grid
+    </span>
+    {% include "partials/seat_legend.html" %}
+  </div>
+  <div class="card-body">
+    <div class="seat-grid-wrapper">
+      <div class="seat-grid" style="grid-template-columns: repeat({{ selected_hall.columns }}, minmax(120px, 1fr));">
+        {% for row in seat_matrix %}
+          {% for seat in row %}
+          <div class="seat-tile {% if seat.is_blocked %}seat-blocked{% elif seat.is_accessible %}seat-accessible{% else %}seat-available{% endif %}">
+            <div class="fw-semibold small mb-1">{{ seat.seat_label }}</div>
+            <div class="seat-status-text mb-2">
+              {% if seat.is_blocked %}
+              <i class="bi bi-slash-circle me-1"></i>Blocked
+              {% elif seat.is_accessible %}
+              <i class="bi bi-universal-access me-1"></i>Accessible
+              {% else %}
+              Available
+              {% endif %}
+            </div>
+            <div class="d-flex gap-1 justify-content-center flex-wrap">
+              <form method="post" action="{{ url_for('seats.toggle_block', seat_id=seat.seat_id) }}" class="m-0">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-xs {% if seat.is_blocked %}btn-outline-success{% else %}btn-outline-danger{% endif %}">
+                  {% if seat.is_blocked %}Unblock{% else %}Block{% endif %}
+                </button>
+              </form>
+              <form method="post" action="{{ url_for('seats.toggle_accessible', seat_id=seat.seat_id) }}" class="m-0">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-xs {% if seat.is_accessible %}btn-primary{% else %}btn-outline-primary{% endif %}" {% if seat.is_blocked %}disabled{% endif %}>
+                  Access
+                </button>
+              </form>
+            </div>
+          </div>
+          {% endfor %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% else %}
+<div class="card border-0 shadow-sm">
+  <div class="card-body text-center py-4">
+    <p class="text-muted mb-3">No examination halls exist yet. Create a hall first to configure its seats.</p>
+    <a href="{{ url_for('halls.create') }}" class="btn btn-primary btn-sm">Add Examination Hall</a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
