@@ -5,8 +5,9 @@ from flask import Flask
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 
+from app.cli import register_cli_commands
 from app.config import config_by_name
-from app.extensions import db, migrate
+from app.extensions import csrf, db, login_manager, migrate
 
 
 def _enable_sqlite_foreign_keys(dbapi_connection, _connection_record) -> None:
@@ -33,14 +34,53 @@ def create_app(config_name: str | None = None) -> Flask:
 
     db.init_app(flask_app)
     migrate.init_app(flask_app, db)
+    login_manager.init_app(flask_app)
+    csrf.init_app(flask_app)
 
     with flask_app.app_context():
         event.listen(Engine, "connect", _enable_sqlite_foreign_keys)
 
     # Import models so SQLAlchemy & Flask-Migrate register all tables
+    from app.models.user import User
     import app.models  # noqa: F401
-    from app.routes import health_bp
 
-    flask_app.register_blueprint(health_bp)
+    @login_manager.user_loader
+    def load_user(user_id: str):
+        """Reload the authenticated user object from the session user ID."""
+        try:
+            return db.session.get(User, int(user_id))
+        except (TypeError, ValueError):
+            return None
+
+    from app.routes import (
+        allocations_bp,
+        auth_bp,
+        constraints_bp,
+        dashboard_bp,
+        exams_bp,
+        halls_bp,
+        health_bp,
+        reports_bp,
+        seats_bp,
+        students_bp,
+        subjects_bp,
+    )
+
+    for blueprint in (
+        health_bp,
+        auth_bp,
+        dashboard_bp,
+        students_bp,
+        subjects_bp,
+        exams_bp,
+        halls_bp,
+        seats_bp,
+        constraints_bp,
+        allocations_bp,
+        reports_bp,
+    ):
+        flask_app.register_blueprint(blueprint)
+
+    register_cli_commands(flask_app)
 
     return flask_app

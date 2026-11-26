@@ -7,7 +7,7 @@ Web-based academic software prototype for automating examination hall allotment 
 ## Technology Stack
 
 - **Frontend:** HTML, CSS, JavaScript, Bootstrap 5
-- **Backend:** Python 3.15, Flask, Flask-SQLAlchemy, Flask-Migrate
+- **Backend:** Python 3.15, Flask, Flask-SQLAlchemy, Flask-Migrate, Flask-Login, Flask-WTF
 - **Database:** PostgreSQL 17
 - **File Processing:** Pandas, OpenPyXL (added in Phase 4)
 - **Reporting:** HTML Print View, ReportLab PDF (added in Phase 9)
@@ -22,8 +22,9 @@ Web-based academic software prototype for automating examination hall allotment 
 Exam-Hall-Allotment-System/
 ├── app/
 │   ├── __init__.py                   # Flask application factory
+│   ├── cli.py                        # Secure Flask CLI commands (create-admin)
 │   ├── config.py                     # Environment-based configuration
-│   ├── extensions.py                 # SQLAlchemy and Flask-Migrate instances
+│   ├── extensions.py                 # SQLAlchemy, Migrate, LoginManager, CSRFProtect
 │   ├── models/                       # PostgreSQL database models
 │   ├── algorithms/                   # Pure Python hall & seating algorithms
 │   │   ├── structures.py             # Shared dataclasses (StudentInput, SeatNode, HallGrid)
@@ -34,7 +35,7 @@ Exam-Hall-Allotment-System/
 │   │   ├── greedy.py                 # Greedy First-Fit baseline
 │   │   ├── validator.py              # Independent seating constraint validator
 │   │   └── cpsat_verifier.py         # Optional OR-Tools CP-SAT verifier
-│   ├── services/                     # Business, import, validation & reporting services
+│   ├── services/                     # Business, auth, import, validation & reporting services
 │   ├── routes/                       # Modular Flask Blueprints per feature
 │   ├── templates/                    # Bootstrap 5 Jinja2 HTML templates
 │   └── static/                       # Custom CSS and JavaScript assets
@@ -77,11 +78,18 @@ DATABASE_URL=postgresql+psycopg2://postgres:YOUR_POSTGRES_PASSWORD@localhost:543
 flask --app run.py db upgrade
 ```
 
-### 5. Run the Application
+### 5. Create the Initial Administrator Account
+Create your administrator account interactively (password input is hidden and hashed before saving):
 ```powershell
-flask --app run.py run
+.\.venv\Scripts\flask.exe --app run.py create-admin
 ```
-Then open `http://127.0.0.1:5000/health` in your browser (Phase 1 health endpoint).
+You can also pass options or environment variables (`ADMIN_USERNAME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`) in automated setups. Duplicate accounts are rejected automatically.
+
+### 6. Run the Application
+```powershell
+.\.venv\Scripts\flask.exe --app run.py run
+```
+Then open `http://127.0.0.1:5000` in your browser and sign in with your administrator email and password.
 
 ---
 

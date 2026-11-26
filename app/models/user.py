@@ -1,12 +1,13 @@
 """User model for administrator authentication and access control."""
 
 from datetime import datetime, timezone
+from flask_login import UserMixin
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from app.extensions import db
 
 
-class User(db.Model):
+class User(UserMixin, db.Model):
     """Authorized system user (e.g., Examination Coordinator / Admin)."""
 
     __tablename__ = "users"
@@ -22,6 +23,10 @@ class User(db.Model):
         nullable=False,
         default=lambda: datetime.now(timezone.utc),
     )
+
+    def get_id(self) -> str:
+        """Return the string primary key expected by Flask-Login."""
+        return str(self.user_id)
 
     def set_password(self, password: str) -> None:
         """Hash and store a plaintext password."""
