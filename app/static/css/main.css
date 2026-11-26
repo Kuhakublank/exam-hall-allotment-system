@@ -1,0 +1,16 @@
+/* Custom application styles for hall grid layouts and printable views. */
+
+body {
+  min-height: 100vh;
+}
+
+.seat-grid {
+  display: grid;
+  gap: 0.5rem;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
