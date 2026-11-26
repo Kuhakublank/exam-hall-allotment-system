@@ -1,7 +1,7 @@
 """Flask application factory."""
 
 import os
-from flask import Flask
+from flask import Flask, render_template
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 
@@ -82,5 +82,12 @@ def create_app(config_name: str | None = None) -> Flask:
         flask_app.register_blueprint(blueprint)
 
     register_cli_commands(flask_app)
+
+    @flask_app.errorhandler(413)
+    def request_entity_too_large(_error):
+        """Return a user-friendly HTTP 413 page when an upload exceeds MAX_CONTENT_LENGTH."""
+        max_bytes = flask_app.config.get("MAX_CONTENT_LENGTH") or (5 * 1024 * 1024)
+        max_mb = max(1, round(max_bytes / (1024 * 1024)))
+        return render_template("errors/413.html", max_mb=max_mb), 413
 
     return flask_app

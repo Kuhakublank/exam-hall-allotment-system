@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Import Students | Exam Seating System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center pb-2 mb-4 border-bottom">
+  <h1 class="h3 mb-0">Bulk Import Students (CSV / XLSX)</h1>
+  <a href="{{ url_for('students.index') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>Back to Students
+  </a>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-4">
+        <form method="post" enctype="multipart/form-data" novalidate>
+          {{ form.hidden_tag() }}
+
+          <div class="mb-3">
+            <label for="{{ form.file.id }}" class="form-label fw-semibold">{{ form.file.label.text }}</label>
+            {{ form.file(class="form-control" + (" is-invalid" if form.file.errors else ""), accept=".csv,.xlsx") }}
+            {% for error in form.file.errors %}
+            <div class="invalid-feedback">{{ error }}</div>
+            {% endfor %}
+          </div>
+
+          <p class="text-muted small mb-4">
+            Every row is validated before saving. If any row has missing fields or a duplicate roll number, no partial changes are saved and all errors are listed below.
+          </p>
+
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-upload me-1"></i>Validate &amp; Import Students
+          </button>
+        </form>
+
+        {% if import_errors %}
+        <hr class="my-4">
+        <div class="alert alert-danger mb-0">
+          <div class="fw-semibold mb-2">Validation Errors ({{ import_errors|length }})</div>
+          <ul class="mb-0 small">
+            {% for err in import_errors %}
+            <li>{{ err }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-semibold">Expected Spreadsheet Format</div>
+      <div class="card-body small">
+        <p class="mb-2"><strong>Required columns:</strong></p>
+        <ul>
+          <li><code>roll_number</code> (unique student identifier)</li>
+          <li><code>name</code> (student full name)</li>
+          <li><code>class_name</code> (or <code>class</code>)</li>
+          <li><code>section</code></li>
+        </ul>
+        <p class="mb-2"><strong>Optional columns:</strong></p>
+        <ul>
+          <li><code>requires_accessible_seat</code> (<code>true</code>/<code>false</code>, <code>yes</code>/<code>no</code>, or <code>1</code>/<code>0</code>)</li>
+          <li><code>accessibility_notes</code></li>
+        </ul>
+        <div class="d-flex gap-2 flex-wrap pt-2">
+          <a href="{{ url_for('students.download_template', fmt='csv') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-download me-1"></i>Download CSV Template
+          </a>
+          <a href="{{ url_for('students.download_template', fmt='xlsx') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-download me-1"></i>Download XLSX Template
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

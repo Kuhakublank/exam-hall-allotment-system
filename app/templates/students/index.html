@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}Students | Exam Seating System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap align-items-center pb-2 mb-4 border-bottom gap-2">
+  <div>
+    <h1 class="h3 mb-1">Student Management</h1>
+    <p class="text-muted small mb-0">Add, edit, search, and bulk-import examinees</p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="{{ url_for('students.import_students') }}" class="btn btn-outline-primary">
+      <i class="bi bi-file-earmark-spreadsheet me-1"></i>Import CSV / XLSX
+    </a>
+    <a href="{{ url_for('students.create') }}" class="btn btn-primary">
+      <i class="bi bi-person-plus me-1"></i>Add Student
+    </a>
+  </div>
+</div>
+
+<!-- Live Summary Counters -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body py-2">
+        <div class="text-muted small">Total Registered Students</div>
+        <div class="h4 mb-0">{{ total_count }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body py-2">
+        <div class="text-muted small">Accessibility Required</div>
+        <div class="h4 mb-0 text-primary">{{ accessible_count }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body py-2">
+        <div class="text-muted small">Classes / Batches</div>
+        <div class="h4 mb-0">{{ classes|length }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Search and Filter -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body">
+    <form method="get" action="{{ url_for('students.index') }}" class="row g-2 align-items-end">
+      <div class="col-md-5">
+        <label for="searchInput" class="form-label small fw-semibold">Search</label>
+        <input id="searchInput" type="text" name="q" value="{{ search }}" class="form-control" placeholder="Roll number, name, class, or section...">
+      </div>
+      <div class="col-md-3">
+        <label for="classSelect" class="form-label small fw-semibold">Class / Batch</label>
+        <select id="classSelect" name="class_name" class="form-select">
+          <option value="">All Classes</option>
+          {% for cls in classes %}
+          <option value="{{ cls }}" {% if class_filter == cls %}selected{% endif %}>{{ cls }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <div class="form-check mb-2">
+          <input id="accCheck" class="form-check-input" type="checkbox" name="accessible_only" value="1" {% if accessible_only %}checked{% endif %}>
+          <label class="form-check-label small" for="accCheck">Accessible only</label>
+        </div>
+      </div>
+      <div class="col-md-2 d-flex gap-1">
+        <button type="submit" class="btn btn-primary w-100">Filter</button>
+        {% if search or class_filter or accessible_only %}
+        <a href="{{ url_for('students.index') }}" class="btn btn-outline-secondary">Reset</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Student Directory Table -->
+<div class="card border-0 shadow-sm">
+  <div class="card-body">
+    {% if students %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Roll Number</th>
+            <th>Name</th>
+            <th>Class</th>
+            <th>Section</th>
+            <th>Default Group</th>
+            <th>Accessible Seat</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for student in students %}
+          <tr>
+            <td class="fw-semibold"><code>{{ student.roll_number }}</code></td>
+            <td>{{ student.name }}</td>
+            <td>{{ student.class_name }}</td>
+            <td>{{ student.section }}</td>
+            <td><span class="badge bg-light text-dark border">{{ student.default_group }}</span></td>
+            <td>
+              {% if student.requires_accessible_seat %}
+              <span class="badge bg-primary"><i class="bi bi-universal-access me-1"></i>Required</span>
+              {% if student.accessibility_notes %}
+              <div class="small text-muted">{{ student.accessibility_notes }}</div>
+              {% endif %}
+              {% else %}
+              <span class="text-muted small">Standard</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <div class="d-inline-flex gap-1">
+                <a href="{{ url_for('students.edit', student_id=student.student_id) }}" class="btn btn-outline-secondary btn-sm">Edit</a>
+                <form method="post" action="{{ url_for('students.delete', student_id=student.student_id) }}" class="d-inline">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-4">
+      <p class="text-muted mb-3">No students match the current criteria.</p>
+      <div class="d-flex justify-content-center gap-2">
+        <a href="{{ url_for('students.create') }}" class="btn btn-primary btn-sm">Add Student</a>
+        <a href="{{ url_for('students.import_students') }}" class="btn btn-outline-primary btn-sm">Import CSV / XLSX</a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -14,7 +14,8 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
 
-    # Session and CSRF security settings
+    # Session, upload, and CSRF security settings
+    MAX_CONTENT_LENGTH = 5 * 1024 * 1024  # 5 MB maximum upload size
     WTF_CSRF_ENABLED = True
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
